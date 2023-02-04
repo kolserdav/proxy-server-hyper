@@ -1,6 +1,19 @@
-[workspace]
-members = [
-	"pass",
-	"proxy"
-]
+[package]
+name = "proxy"
+version = "0.1.0"
+edition = "2021"
 
+[[bin]]
+name = "proxy"
+src = "src/main.rs"
+
+[lib]
+name = "proxy"
+src = "sec/lib.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+hyper = { version = "0.14", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
+dotenv = "0.15.0"

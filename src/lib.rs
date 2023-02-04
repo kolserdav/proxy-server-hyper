@@ -1,13 +1,18 @@
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Request, Response, Server};
+mod prelude;
+use prelude::*;
 use std::convert::Infallible;
 use std::net::SocketAddr;
 
 #[tokio::main]
 pub async fn proxy() {
-    let addr = SocketAddr::from(([192, 168, 0, 3], 3000));
-
-    println!("Listen proxy server");
+    let config = create_config().expect("Failed parse config");
+    println!(
+        "Listen proxy server at http://{:?}:{}",
+        &config.host, &config.port
+    );
+    let addr = SocketAddr::from((config.host, config.port));
     let make_svc = make_service_fn(|_conn| async { Ok::<_, Infallible>(service_fn(hello_world)) });
 
     let server = Server::bind(&addr).serve(make_svc);
