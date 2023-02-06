@@ -102,5 +102,6 @@ pub async fn pass() {
 }
 
 async fn hello_world(_req: Request<Body>) -> Result<Response<Body>, Infallible> {
+    println!("{:?} body: {:?}", _req, _req.body());
     Ok(Response::new("Hello, World".into()))
 }

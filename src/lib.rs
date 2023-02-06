@@ -1,5 +1,5 @@
 use hyper::service::{make_service_fn, service_fn};
-use hyper::{Body, Client, Method, Request, Response, Server, Uri};
+use hyper::{Body, Client, Request, Response, Server, Uri};
 pub mod error;
 pub mod prelude;
 use prelude::*;
@@ -14,7 +14,7 @@ pub async fn proxy() {
         &config.host, &config.port
     );
     let addr = SocketAddr::from((config.host, config.port));
-    let make_svc = make_service_fn(|_conn| async { Ok::<_, Infallible>(service_fn(hello_world)) });
+    let make_svc = make_service_fn(|_conn| async { Ok::<_, Infallible>(service_fn(target)) });
 
     let server = Server::bind(&addr).serve(make_svc);
 
@@ -23,9 +23,9 @@ pub async fn proxy() {
     }
 }
 
-async fn hello_world(_req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+async fn target(_req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     let client = Client::new();
-    let config = create_config().expect("Failed parse test config");
+    let config = create_config().expect("Failed parse target address");
     let uri = format!(
         "http://{}:{}{}",
         config.test_host,
@@ -34,12 +34,12 @@ async fn hello_world(_req: Request<Body>) -> Result<Response<Body>, hyper::Error
     )
     .parse::<Uri>()
     .expect("Failed parse target uri");
-    let body = _req.body().clone();
+    let body = format!("{:?}", _req.body());
     let req = Request::builder()
         .method(_req.method())
         .uri(uri)
-        .body(*body)
-        .expect("request builder");
+        .body(Body::from(body))
+        .expect("Failed proxy request");
     let res = client.request(req).await?;
     let buf = hyper::body::to_bytes(res).await?;
     Ok(Response::new(buf.into()))
