@@ -23,6 +23,24 @@ pub async fn proxy() {
     }
 }
 
-async fn hello_world(_req: Request<Body>) -> Result<Response<Body>, Infallible> {
-    Ok(Response::new("Hello, World".into()))
+async fn hello_world(_req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+    use hyper::{body::HttpBody as _, Client, Uri};
+
+    let client = Client::new();
+
+    let config = create_config().expect("Failed parse test config");
+    // Make a GET /ip to 'http://httpbin.org'
+    let uri = format!("http://{}:{}", config.test_host, config.test_port);
+    let res = client
+        .get(uri.parse::<Uri>().expect("Error parse uri"))
+        .await?;
+
+    // And then, if the request gets a response...
+    println!("status: {}", res.status());
+
+    // Concatenate the body stream into a single buffer...
+    let buf = hyper::body::to_bytes(res).await?;
+
+    println!("body: {:?}", buf);
+    Ok(Response::new(buf.into()))
 }

@@ -18,8 +18,8 @@ const TEST_HOST: &str = "127.0.0.1";
 pub struct Config {
     pub port: u16,
     pub host: IpAddr,
-    test_port: u16,
-    test_host: IpAddr,
+    pub test_port: u16,
+    pub test_host: IpAddr,
 }
 
 pub fn create_config() -> Result<Config> {
