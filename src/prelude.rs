@@ -6,6 +6,9 @@ use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Request, Response, Server};
 use std::convert::Infallible;
 use std::env;
+use std::fs::File;
+use std::io::prelude::Read;
+use std::io::BufRead;
 use std::net::SocketAddr;
 use std::str::FromStr;
 
@@ -103,5 +106,8 @@ pub async fn pass() {
 
 async fn hello_world(_req: Request<Body>) -> Result<Response<Body>, Infallible> {
     println!("{:?} body: {:?}", _req, _req.body());
+    let f = File::open("./lib.rs");
+    let stream = tokio_codec::F:new(f);:wq
+
     Ok(Response::new("Hello, World".into()))
 }
