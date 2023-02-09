@@ -4,11 +4,12 @@ pub mod error;
 pub mod prelude;
 use core::pin::Pin;
 use core::task::{Context, Poll};
-use futures::{ready, stream::Stream as FutureStream};
+use futures::{executor::BlockingStream, stream::Stream as FutureStream, Future};
 use prelude::*;
 use std::convert::Infallible;
 use std::io::prelude::Read;
 use std::net::SocketAddr;
+use tokio::io::BufWriter;
 
 #[tokio::main]
 pub async fn proxy() {
@@ -46,14 +47,16 @@ async fn target(_req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
         .expect("Failed proxy request");
     let res = client.request(req);
     println!("{:?}", res);
-    let mut stream = std::net::TcpStream::connect("127.0.0.1:3001").expect("78");
+    let mut stream = std::net::TcpStream::connect("127.0.0.1:3001").expect("Error 232");
+    // let mut stream = std::io::copy(&mut stream, FutureStream::new());
+    //let stream = Future::<std::net::TcpStream>::async(&mut stream);
     println!("{:?}", stream);
     let mut d = [0; 128];
-    // stream.write(&[1])?;
+    // stream.(&[1])?;
 
-    stream.read(&mut d);
-    let body = Body::wrap_stream(stream);
-    Ok(Response::new(body))
+    // stream.read(&mut d);
+    // let body = Body::wrap_stream(stream);
+    // Ok(Response::new(body))
     // let buf = hyper::body::to_bytes(res).await?;
-    //Ok(Response::new("".into()))
+    Ok(Response::new("".into()))
 }

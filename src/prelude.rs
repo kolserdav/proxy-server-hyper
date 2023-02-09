@@ -2,6 +2,7 @@ use std::net::IpAddr;
 extern crate dotenv;
 use super::error::Result;
 use dotenv::dotenv;
+use futures_util;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Request, Response, Server};
 use std::convert::Infallible;
@@ -104,10 +105,28 @@ pub async fn pass() {
     }
 }
 
+// impl Into<hyper::body::Bytes> for u8 {}
+
 async fn hello_world(_req: Request<Body>) -> Result<Response<Body>, Infallible> {
     println!("{:?} body: {:?}", _req, _req.body());
-    let f = File::open("./lib.rs");
-    let stream = tokio_codec::F:new(f);:wq
-
-    Ok(Response::new("Hello, World".into()))
+    let f = File::open("./lib.rs").unwrap();
+    // let stream = tokio_codec::F:new(f);:wq
+    let buf = std::io::BufReader::new(f);
+    let vec = Vec::<Result<u8, _>>::new();
+    loop {
+        let mut ch: [u8; 8];
+        let d = buf.read(&mut ch);
+        let d = match d {
+            Ok(v) => v,
+            Err(e) => {
+                break;
+            }
+        };
+        ch.map(|i| {
+            vec.push(Ok(i));
+        });
+    }
+    let stream = futures_util::stream::iter(vec);
+    let body = hyper::Body::wrap_stream(stream);
+    Ok(Response::new(body))
 }
