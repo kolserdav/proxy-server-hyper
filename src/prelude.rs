@@ -111,22 +111,18 @@ async fn hello_world(_req: Request<Body>) -> Result<Response<Body>, Infallible> 
     println!("{:?} body: {:?}", _req, _req.body());
     let f = File::open("./lib.rs").unwrap();
     // let stream = tokio_codec::F:new(f);:wq
-    let buf = std::io::BufReader::new(f);
-    let vec = Vec::<Result<u8, _>>::new();
+    let mut buf = std::io::BufReader::new(f);
+    let mut vec = Vec::<u8>::new();
     loop {
-        let mut ch: [u8; 8];
+        let mut ch: [u8; 1] = [0; 1];
         let d = buf.read(&mut ch);
-        let d = match d {
-            Ok(v) => v,
-            Err(e) => {
-                break;
-            }
-        };
+        if let Err(_) = d {
+            break;
+        }
         ch.map(|i| {
-            vec.push(Ok(i));
+            vec.push(i);
         });
     }
-    let stream = futures_util::stream::iter(vec);
-    let body = hyper::Body::wrap_stream(stream);
+    let body = hyper::Body::wrap_stream(vec);
     Ok(Response::new(body))
 }
