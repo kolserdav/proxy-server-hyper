@@ -1,4 +1,3 @@
-use futures::executor::ThreadPool;
 use std::net::IpAddr;
 extern crate dotenv;
 use super::error::Result;
@@ -8,8 +7,6 @@ use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Response, Server};
 use std::convert::Infallible;
 use std::env;
-use std::fs::File;
-use std::io::prelude::Read;
 use std::net::SocketAddr;
 use std::str::FromStr;
 
@@ -97,15 +94,12 @@ pub async fn pass() {
     );
     let addr = SocketAddr::from((config.test_host, config.test_port));
 
-    let pool = ThreadPool::new().unwrap();
 
     let make_service = make_service_fn(|_socket| {
-        let pool = pool.clone();
         async {
             let svc_fn = service_fn(move |_request| {
-                let pool = pool.clone();
                 async {
-                    let data = stream(pool);
+                    let data = stream();
                     let resp = Response::new(Body::wrap_stream(data));
                     Result::<_, Infallible>::Ok(resp)
                 }
