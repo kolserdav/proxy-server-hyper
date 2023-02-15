@@ -1,15 +1,15 @@
+use futures::executor::ThreadPool;
 use std::net::IpAddr;
 extern crate dotenv;
 use super::error::Result;
+use super::stream::stream;
 use dotenv::dotenv;
-use futures_util;
 use hyper::service::{make_service_fn, service_fn};
-use hyper::{Body, Request, Response, Server};
+use hyper::{Body, Response, Server};
 use std::convert::Infallible;
 use std::env;
 use std::fs::File;
 use std::io::prelude::Read;
-use std::io::BufRead;
 use std::net::SocketAddr;
 use std::str::FromStr;
 
@@ -96,33 +96,27 @@ pub async fn pass() {
         &config.test_host, &config.test_port
     );
     let addr = SocketAddr::from((config.test_host, config.test_port));
-    let make_svc = make_service_fn(|_conn| async { Ok::<_, Infallible>(service_fn(hello_world)) });
 
-    let server = Server::bind(&addr).serve(make_svc);
+    let pool = ThreadPool::new().unwrap();
+
+    let make_service = make_service_fn(|_socket| {
+        let pool = pool.clone();
+        async {
+            let svc_fn = service_fn(move |_request| {
+                let pool = pool.clone();
+                async {
+                    let data = stream(pool);
+                    let resp = Response::new(Body::wrap_stream(data));
+                    Result::<_, Infallible>::Ok(resp)
+                }
+            });
+            Result::<_, Infallible>::Ok(svc_fn)
+        }
+    });
+
+    let server = Server::bind(&addr).serve(make_service);
 
     if let Err(e) = server.await {
         eprintln!("server error: {}", e);
     }
-}
-
-// impl Into<hyper::body::Bytes> for u8 {}
-
-async fn hello_world(_req: Request<Body>) -> Result<Response<Body>, Infallible> {
-    println!("{:?} body: {:?}", _req, _req.body());
-    let f = File::open("./lib.rs").unwrap();
-    // let stream = tokio_codec::F:new(f);:wq
-    let mut buf = std::io::BufReader::new(f);
-    let mut vec = Vec::<u8>::new();
-    loop {
-        let mut ch: [u8; 1] = [0; 1];
-        let d = buf.read(&mut ch);
-        if let Err(_) = d {
-            break;
-        }
-        ch.map(|i| {
-            vec.push(i);
-        });
-    }
-    let body = hyper::Body::wrap_stream(vec);
-    Ok(Response::new(body))
 }

@@ -17,5 +17,5 @@ src = "sec/lib.rs"
 hyper = { version = "0.14", features = ["full"] }
 tokio = { version = "1", features = ["full"] }
 dotenv = "0.15.0"
-futures = "0.3.26"
+futures = { version = "0.3.26", features = ["thread-pool"] }
 futures-util = "0.3.26"
