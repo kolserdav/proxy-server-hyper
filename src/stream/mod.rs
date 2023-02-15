@@ -1,10 +1,25 @@
-use futures::{channel::mpsc, executor::ThreadPool, task::SpawnExt, SinkExt, Stream};
-use std::{io::Read, io::Result};
+use futures::{
+    channel::mpsc,
+    executor::ThreadPool,
+    task::{Context, Poll, SpawnExt},
+    Future, SinkExt, Stream,
+};
+use std::io::{Read, Result};
+use std::pin::Pin;
 
-pub fn stream() -> impl Stream<Item = Result<Vec<u8>>> {
+struct Res;
+
+impl Future for Res {
+    type Output = Self;
+    fn poll(self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Res> {
+        Poll::Ready(Res {})
+    }
+}
+
+pub fn stream(cb: impl Future<Output = ()>) -> impl Stream<Item = Result<Vec<u8>>> {
     let (mut tx, rx) = mpsc::channel(10);
     let pool = ThreadPool::new().unwrap();
-    pool.spawn(async move {
+    let block = async move {
         let mut f = std::fs::File::open("./Cargo.toml").expect("file not found");
         loop {
             let mut d = [0; 1];
@@ -21,7 +36,7 @@ pub fn stream() -> impl Stream<Item = Result<Vec<u8>>> {
             });
             tx.send(Ok(vec)).await.expect("Unable to send block");
         }
-    })
-    .expect("Unable to spawn thread");
+    };
+    pool.spawn(block).expect("Unable to spawn thread");
     rx
 }
