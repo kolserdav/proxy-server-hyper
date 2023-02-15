@@ -2,6 +2,8 @@ use std::net::IpAddr;
 extern crate dotenv;
 use super::error::Result;
 use super::stream::stream;
+pub mod constants;
+use constants::{HOST, PORT, TEST_HOST, TEST_PORT};
 use dotenv::dotenv;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Response, Server};
@@ -9,11 +11,6 @@ use std::convert::Infallible;
 use std::env;
 use std::net::SocketAddr;
 use std::str::FromStr;
-
-const PORT: &str = "3000";
-const HOST: &str = "127.0.0.1";
-const TEST_PORT: &str = "3001";
-const TEST_HOST: &str = "127.0.0.1";
 
 #[derive(Debug)]
 pub struct Config {
@@ -86,7 +83,7 @@ fn test_create_config() {
 }
 
 #[tokio::main]
-pub async fn pass() {
+pub async fn test_target_server() {
     let config = create_config().expect("Failed parse config");
     println!(
         "Listen test target server at: http://{:?}:{} ...",
@@ -94,18 +91,13 @@ pub async fn pass() {
     );
     let addr = SocketAddr::from((config.test_host, config.test_port));
 
-
-    let make_service = make_service_fn(|_socket| {
-        async {
-            let svc_fn = service_fn(move |_request| {
-                async {
-                    let data = stream();
-                    let resp = Response::new(Body::wrap_stream(data));
-                    Result::<_, Infallible>::Ok(resp)
-                }
-            });
-            Result::<_, Infallible>::Ok(svc_fn)
-        }
+    let make_service = make_service_fn(|_socket| async {
+        let svc_fn = service_fn(move |_request| async {
+            let data = stream();
+            let resp = Response::new(Body::wrap_stream(data));
+            Result::<_, Infallible>::Ok(resp)
+        });
+        Result::<_, Infallible>::Ok(svc_fn)
     });
 
     let server = Server::bind(&addr).serve(make_service);

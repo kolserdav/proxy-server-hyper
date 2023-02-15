@@ -1,33 +1,24 @@
+use super::constants::CHUNK_SIZE;
 use futures::{
-    channel::mpsc,
+    channel::mpsc::{channel, Receiver},
     executor::ThreadPool,
-    task::{Context, Poll, SpawnExt},
-    Future, SinkExt, Stream,
+    task::SpawnExt,
+    SinkExt,
 };
 use std::io::{Read, Result};
-use std::pin::Pin;
 
-struct Res;
-
-impl Future for Res {
-    type Output = Self;
-    fn poll(self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Res> {
-        Poll::Ready(Res {})
-    }
-}
-
-pub fn stream(cb: impl Future<Output = ()>) -> impl Stream<Item = Result<Vec<u8>>> {
-    let (mut tx, rx) = mpsc::channel(10);
+pub fn stream() -> Receiver<Result<Vec<u8>>> {
+    let (mut tx, rx) = channel(10);
     let pool = ThreadPool::new().unwrap();
     let block = async move {
         let mut f = std::fs::File::open("./Cargo.toml").expect("file not found");
         loop {
-            let mut d = [0; 1];
+            let mut d = [0; CHUNK_SIZE];
             let len = f.read(&mut d).unwrap();
             if len == 0 {
                 break;
             }
-            let mut vec = Vec::new();
+            let mut vec = vec![];
             d.map(|_d| {
                 if _d == 0 {
                     return;
