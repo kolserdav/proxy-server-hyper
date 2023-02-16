@@ -1,4 +1,3 @@
-use std::net::IpAddr;
 extern crate dotenv;
 use super::error::Result;
 use super::stream::test_target_stream;
@@ -7,10 +6,7 @@ use constants::{HOST, PORT, TEST_HOST, TEST_PORT};
 use dotenv::dotenv;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Response, Server};
-use std::convert::Infallible;
-use std::env;
-use std::net::SocketAddr;
-use std::str::FromStr;
+use std::{convert::Infallible, env, net::IpAddr, net::SocketAddr, str::FromStr};
 
 #[derive(Debug)]
 pub struct Config {

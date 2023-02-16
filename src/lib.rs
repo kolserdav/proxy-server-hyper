@@ -1,13 +1,12 @@
 use hyper::service::{make_service_fn, service_fn};
-use hyper::{Body, Client, Request, Response, Server, Uri};
+use hyper::{Body, Response, Server};
 pub mod error;
 pub mod prelude;
 pub mod stream;
 use prelude::*;
 use std::convert::Infallible;
-use std::io::prelude::Read;
 use std::net::SocketAddr;
-use stream::stream;
+use stream::stream_tcp;
 
 #[tokio::main]
 pub async fn proxy() {
@@ -20,7 +19,7 @@ pub async fn proxy() {
 
     let make_service = make_service_fn(|_socket| async {
         let svc_fn = service_fn(move |_request| async {
-            let data = stream(_request);
+            let data = stream_tcp(_request);
             let resp = Response::new(Body::wrap_stream(data));
             Result::<_, Infallible>::Ok(resp)
         });
