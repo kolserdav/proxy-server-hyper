@@ -97,7 +97,8 @@ pub fn build_req_headers(_req: Request<Body>) -> String {
         headers += format!("{}: {:?}\r\n", k, v).as_str();
     }
     format!(
-        "{} {} {:?}\r\n{}\r\n\r\n",
+        "{} {} {:?}\r\n{}\r\n
+        Connection: close\r\n\r\n",
         _req.method(),
         _req.uri(),
         _req.version(),
