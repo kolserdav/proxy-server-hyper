@@ -1,7 +1,7 @@
 use std::net::IpAddr;
 extern crate dotenv;
 use super::error::Result;
-use super::stream::stream;
+use super::stream::test_target_stream;
 pub mod constants;
 use constants::{HOST, PORT, TEST_HOST, TEST_PORT};
 use dotenv::dotenv;
@@ -93,7 +93,7 @@ pub async fn test_target_server() {
 
     let make_service = make_service_fn(|_socket| async {
         let svc_fn = service_fn(move |_request| async {
-            let data = stream();
+            let data = test_target_stream();
             let resp = Response::new(Body::wrap_stream(data));
             Result::<_, Infallible>::Ok(resp)
         });
