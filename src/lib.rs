@@ -6,7 +6,7 @@ pub mod stream;
 use prelude::*;
 use std::convert::Infallible;
 use std::net::SocketAddr;
-use stream::stream_tcp;
+use stream::{stream, stream_tcp};
 
 #[tokio::main]
 pub async fn proxy() {
