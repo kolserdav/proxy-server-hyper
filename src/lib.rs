@@ -6,7 +6,7 @@ pub mod stream;
 use prelude::*;
 use std::convert::Infallible;
 use std::net::SocketAddr;
-use stream::stream_tcp;
+use stream::{stream_reqwest, stream_tcp};
 
 #[tokio::main]
 pub async fn proxy() {
@@ -19,7 +19,7 @@ pub async fn proxy() {
 
     let make_service = make_service_fn(|_socket| async {
         let svc_fn = service_fn(move |_request| async {
-            let data = stream_tcp(_request);
+            let data = stream_reqwest(_request);
             let resp = Response::new(Body::wrap_stream(data));
             Result::<_, Infallible>::Ok(resp)
         });

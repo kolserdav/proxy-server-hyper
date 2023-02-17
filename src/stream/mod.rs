@@ -7,11 +7,45 @@ use futures::{
     SinkExt,
 };
 use hyper::{Body, Request};
+use reqwest::Client;
 use std::{
     fs::File,
     io::{Read, Result, Write},
     net::TcpStream,
 };
+
+pub fn stream_reqwest(_req: Request<Body>) -> Receiver<Result<Vec<u8>>> {
+    let (mut tx, rx) = channel(10);
+    let pool = ThreadPool::new().expect("Err 19");
+    println!("{:?}", _req);
+    let block = async move {
+        let mut response = Client::new()
+            .get("http://192.168.0.3:3001")
+            .send()
+            .await
+            .or(Err(format!("Error 32")))
+            .unwrap();
+        let content_length = response.content_length().unwrap();
+
+        loop {
+            match response.chunk().await {
+                Ok(d) => {
+                    if let None = d {
+                        break;
+                    }
+                    let d = d.unwrap();
+                    let vec = d.to_vec();
+                    tx.send(Ok(vec)).await.expect("Unable to send block");
+                }
+                Err(e) => {
+                    println!("Failed to stream data: {}", e);
+                }
+            }
+        }
+    };
+    pool.spawn(block).expect("Err 46");
+    rx
+}
 
 pub fn stream_tcp(_req: Request<Body>) -> Receiver<Result<Vec<u8>>> {
     let (mut tx, rx) = channel(10);
